@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My 3D LinkTree</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            background: linear-gradient(to right, #ff8a00, #da1b60);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .social-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 50px;
+        }
+        
+        .social-icon {
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .social-icon:hover {
+            transform: scale(1.2);
+        }
+        
+        .bio {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div class="particles" id="particles-js"></div>
+    
+    <div class="content">
+        <div class="bio">
+            <h1>@IlTuoUsername</h1>
+            <p>Benvenuto nella mia pagina personale 3D! Clicca sulle icone qui sotto per seguirmi sui social.</p>
+        </div>
+        
+        <div class="social-container">
+            <!-- Questi div verranno sostituiti dai modelli 3D -->
+            <div class="social-icon" id="instagram" data-link="https://instagram.com"></div>
+            <div class="social-icon" id="linkedin" data-link="https://linkedin.com"></div>
+            <div class="social-icon" id="facebook" data-link="https://facebook.com"></div>
+            <div class="social-icon" id="twitter" data-link="https://twitter.com"></div>
+            <div class="social-icon" id="youtube" data-link="https://youtube.com"></div>
+        </div>
+    </div>
+
+    <script>
+        // Inizializzazione della scena Three.js
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        // Luci
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+        
+        const pointLight = new THREE.PointLight(0xda1b60, 2, 100);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+        
+        // Modelli 3D (sostituire con modelli reali dei loghi)
+        const socialIcons = [
+            { id: 'instagram', color: 0xE1306C, position: { x: -2, y: 0, z: 0 } },
+            { id: 'linkedin', color: 0x0077B5, position: { x: -1, y: 0, z: 0 } },
+            { id: 'facebook', color: 0x4267B2, position: { x: 0, y: 0, z: 0 } },
+            { id: 'twitter', color: 0x1DA1F2, position: { x: 1, y: 0, z: 0 } },
+            { id: 'youtube', color: 0xFF0000, position: { x: 2, y: 0, z: 0 } }
+        ];
+        
+        const icons = [];
+        
+        socialIcons.forEach((iconData, index) => {
+            const geometry = new THREE.IcosahedronGeometry(0.5, 2);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: iconData.color,
+                emissive: iconData.color,
+                emissiveIntensity: 0.2,
+                shininess: 100
+            });
+            
+            const icon = new THREE.Mesh(geometry, material);
+            icon.position.set(iconData.position.x, iconData.position.y, iconData.position.z);
+            icon.userData.link = document.getElementById(iconData.id).dataset.link;
+            scene.add(icon);
+            icons.push(icon);
+            
+            // Aggiungi testo (sarebbe meglio usare texture dei loghi reali)
+            const textGeometry = new THREE.TextGeometry(iconData.id.toUpperCase(), {
+                size: 0.2,
+                height: 0.02,
+                font: new THREE.Font(threeDefaultFont)
+            });
+            const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const text = new THREE.Mesh(textGeometry, textMaterial);
+            text.position.set(iconData.position.x, iconData.position.y - 0.8, iconData.position.z);
+            scene.add(text);
+        });
+        
+        camera.position.z = 5;
+        
+        // Controlli per ruotare la scena
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1;
+        
+        // Raycaster per interazione con il mouse
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+        
+        function onClick() {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(icons);
+            
+            if (intersects.length > 0) {
+                window.open(intersects[0].object.userData.link, '_blank');
+            }
+        }
+        
+        window.addEventListener('mousemove', onMouseMove, false);
+        window.addEventListener('click', onClick, false);
+        
+        // Animazione
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animazione icone
+            icons.forEach((icon, index) => {
+                icon.rotation.x += 0.01;
+                icon.rotation.y += 0.01;
+                
+                // Effetto hover
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(icon);
+                
+                if (intersects.length > 0) {
+                    icon.scale.lerp(new THREE.Vector3(1.5, 1.5, 1.5), 0.1);
+                    icon.material.emissiveIntensity = 0.8;
+                } else {
+                    icon.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+                    icon.material.emissiveIntensity = 0.2;
+                }
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Responsive
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Effetto particelle (opzionale)
+        // Avresti bisogno di includere particles.js per questo effetto
+    </script>
+</body>
+</html>
