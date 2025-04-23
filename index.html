@@ -3,16 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My 3D LinkTree</title>
+    <title>My Colorful 3D LinkTree</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
     <style>
+        :root {
+            --primary: #ff4d4d;
+            --secondary: #4d79ff;
+            --accent: #ffcc00;
+            --bg-dark: #1a1a2e;
+            --bg-light: #16213e;
+            --text-light: #f8f8f8;
+        }
+        
         body {
             margin: 0;
             overflow: hidden;
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: white;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark), var(--bg-light));
+            color: var(--text-light);
         }
         
         #canvas-container {
@@ -35,12 +45,13 @@
         }
         
         h1 {
-            font-size: 3rem;
-            margin-bottom: 2rem;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-            background: linear-gradient(to right, #ff8a00, #da1b60);
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            background: linear-gradient(to right, var(--primary), var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-weight: 700;
         }
         
         .social-container {
@@ -48,126 +59,293 @@
             justify-content: center;
             flex-wrap: wrap;
             gap: 30px;
-            margin-top: 50px;
+            margin-top: 60px;
         }
         
         .social-icon {
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: all 0.3s ease;
+            position: relative;
         }
         
         .social-icon:hover {
-            transform: scale(1.2);
+            transform: translateY(-10px) scale(1.1);
+            filter: drop-shadow(0 10px 20px rgba(255,255,255,0.3));
+        }
+        
+        .social-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover .social-label {
+            opacity: 1;
+            transform: translateY(5px);
+            color: var(--accent);
         }
         
         .bio {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .particles {
+        .bio p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .floating-particles {
             position: absolute;
             width: 100%;
             height: 100%;
             z-index: -2;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
-    <div class="particles" id="particles-js"></div>
+    <div class="floating-particles" id="particles"></div>
     
     <div class="content">
         <div class="bio">
             <h1>@IlTuoUsername</h1>
-            <p>Benvenuto nella mia pagina personale 3D! Clicca sulle icone qui sotto per seguirmi sui social.</p>
+            <p>Creatore di esperienze digitali | Designer 3D | Sviluppatore Frontend<br>Connettiamoci attraverso i miei social!</p>
         </div>
         
         <div class="social-container">
-            <!-- Questi div verranno sostituiti dai modelli 3D -->
-            <div class="social-icon" id="instagram" data-link="https://instagram.com"></div>
-            <div class="social-icon" id="linkedin" data-link="https://linkedin.com"></div>
-            <div class="social-icon" id="facebook" data-link="https://facebook.com"></div>
-            <div class="social-icon" id="twitter" data-link="https://twitter.com"></div>
-            <div class="social-icon" id="youtube" data-link="https://youtube.com"></div>
+            <div class="social-icon" id="instagram" data-link="https://instagram.com">
+                <div class="social-label">Instagram</div>
+            </div>
+            <div class="social-icon" id="linkedin" data-link="https://linkedin.com">
+                <div class="social-label">LinkedIn</div>
+            </div>
+            <div class="social-icon" id="facebook" data-link="https://facebook.com">
+                <div class="social-label">Facebook</div>
+            </div>
+            <div class="social-icon" id="twitter" data-link="https://twitter.com">
+                <div class="social-label">Twitter</div>
+            </div>
+            <div class="social-icon" id="youtube" data-link="https://youtube.com">
+                <div class="social-label">YouTube</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Inizializzazione della scena Three.js
+        // Inizializzazione scena Three.js con colori vivaci
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        scene.background = new THREE.Color(0x1a1a2e);
         
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 7;
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
         container.appendChild(renderer.domElement);
         
-        // Luci
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        // Luci colorate
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
         scene.add(ambientLight);
         
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(1, 1, 1);
-        scene.add(directionalLight);
+        const directionalLight1 = new THREE.DirectionalLight(0xff4d4d, 0.8);
+        directionalLight1.position.set(5, 5, 5);
+        directionalLight1.castShadow = true;
+        scene.add(directionalLight1);
         
-        const pointLight = new THREE.PointLight(0xda1b60, 2, 100);
-        pointLight.position.set(5, 5, 5);
+        const directionalLight2 = new THREE.DirectionalLight(0x4d79ff, 0.8);
+        directionalLight2.position.set(-5, -5, -5);
+        scene.add(directionalLight2);
+        
+        const pointLight = new THREE.PointLight(0xffcc00, 1.5, 20);
+        pointLight.position.set(0, 3, 5);
+        pointLight.castShadow = true;
         scene.add(pointLight);
         
-        // Modelli 3D (sostituire con modelli reali dei loghi)
+        // Effetto particelle fluttuanti
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                const size = Math.random() * 5 + 3;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const delay = Math.random() * 5;
+                const duration = Math.random() * 10 + 10;
+                const opacity = Math.random() * 0.4 + 0.1;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.opacity = opacity;
+                particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        createParticles();
+        
+        // Creazione icone social 3D con colori reali
         const socialIcons = [
-            { id: 'instagram', color: 0xE1306C, position: { x: -2, y: 0, z: 0 } },
-            { id: 'linkedin', color: 0x0077B5, position: { x: -1, y: 0, z: 0 } },
-            { id: 'facebook', color: 0x4267B2, position: { x: 0, y: 0, z: 0 } },
-            { id: 'twitter', color: 0x1DA1F2, position: { x: 1, y: 0, z: 0 } },
-            { id: 'youtube', color: 0xFF0000, position: { x: 2, y: 0, z: 0 } }
+            { 
+                id: 'instagram', 
+                color: 0xE1306C, 
+                position: { x: -2.5, y: 0, z: 0 },
+                logoColor: 0xffffff
+            },
+            { 
+                id: 'linkedin', 
+                color: 0x0077B5, 
+                position: { x: -1.25, y: 0, z: 0 },
+                logoColor: 0xffffff
+            },
+            { 
+                id: 'facebook', 
+                color: 0x4267B2, 
+                position: { x: 0, y: 0, z: 0 },
+                logoColor: 0xffffff
+            },
+            { 
+                id: 'twitter', 
+                color: 0x1DA1F2, 
+                position: { x: 1.25, y: 0, z: 0 },
+                logoColor: 0xffffff
+            },
+            { 
+                id: 'youtube', 
+                color: 0xFF0000, 
+                position: { x: 2.5, y: 0, z: 0 },
+                logoColor: 0xffffff
+            }
         ];
         
         const icons = [];
+        const loader = new THREE.TextureLoader();
         
+        // Creazione di icone 3D più dettagliate
         socialIcons.forEach((iconData, index) => {
-            const geometry = new THREE.IcosahedronGeometry(0.5, 2);
-            const material = new THREE.MeshPhongMaterial({ 
+            // Base dell'icona
+            const baseGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.1, 6);
+            const baseMaterial = new THREE.MeshPhongMaterial({ 
                 color: iconData.color,
                 emissive: iconData.color,
-                emissiveIntensity: 0.2,
-                shininess: 100
+                emissiveIntensity: 0.1,
+                shininess: 60,
+                flatShading: true
             });
             
-            const icon = new THREE.Mesh(geometry, material);
-            icon.position.set(iconData.position.x, iconData.position.y, iconData.position.z);
-            icon.userData.link = document.getElementById(iconData.id).dataset.link;
-            scene.add(icon);
-            icons.push(icon);
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.rotation.x = Math.PI / 2;
+            base.position.set(iconData.position.x, iconData.position.y - 0.6, iconData.position.z);
+            scene.add(base);
             
-            // Aggiungi testo (sarebbe meglio usare texture dei loghi reali)
-            const textGeometry = new THREE.TextGeometry(iconData.id.toUpperCase(), {
-                size: 0.2,
-                height: 0.02,
-                font: new THREE.Font(threeDefaultFont)
+            // Logo dell'icona (semplificato)
+            let logoShape;
+            
+            switch(iconData.id) {
+                case 'instagram':
+                    // Logo Instagram (semplificato)
+                    const instaGeometry = new THREE.RingGeometry(0.3, 0.4, 32);
+                    const instaMaterial = new THREE.MeshPhongMaterial({ 
+                        color: iconData.logoColor,
+                        side: THREE.DoubleSide
+                    });
+                    logoShape = new THREE.Mesh(instaGeometry, instaMaterial);
+                    logoShape.rotation.x = Math.PI / 2;
+                    break;
+                    
+                case 'linkedin':
+                    // Logo LinkedIn (semplificato)
+                    const linkedinGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.1);
+                    const linkedinMaterial = new THREE.MeshPhongMaterial({ 
+                        color: iconData.logoColor
+                    });
+                    logoShape = new THREE.Mesh(linkedinGeometry, linkedinMaterial);
+                    break;
+                    
+                case 'facebook':
+                    // Logo Facebook (semplificato)
+                    const fbGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.1);
+                    const fbMaterial = new THREE.MeshPhongMaterial({ 
+                        color: iconData.logoColor
+                    });
+                    logoShape = new THREE.Mesh(fbGeometry, fbMaterial);
+                    break;
+                    
+                case 'twitter':
+                    // Logo Twitter (semplificato)
+                    const twitterGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+                    const twitterMaterial = new THREE.MeshPhongMaterial({ 
+                        color: iconData.logoColor
+                    });
+                    logoShape = new THREE.Mesh(twitterGeometry, twitterMaterial);
+                    break;
+                    
+                case 'youtube':
+                    // Logo YouTube (semplificato)
+                    const ytGeometry = new THREE.ConeGeometry(0.5, 0.8, 3);
+                    const ytMaterial = new THREE.MeshPhongMaterial({ 
+                        color: iconData.logoColor
+                    });
+                    logoShape = new THREE.Mesh(ytGeometry, ytMaterial);
+                    logoShape.rotation.z = Math.PI;
+                    break;
+            }
+            
+            logoShape.position.set(iconData.position.x, iconData.position.y, iconData.position.z);
+            logoShape.userData.link = document.getElementById(iconData.id).dataset.link;
+            scene.add(logoShape);
+            icons.push(logoShape);
+            
+            // Effetto alone
+            const haloGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+            const haloMaterial = new THREE.MeshBasicMaterial({
+                color: iconData.color,
+                transparent: true,
+                opacity: 0.3
             });
-            const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const text = new THREE.Mesh(textGeometry, textMaterial);
-            text.position.set(iconData.position.x, iconData.position.y - 0.8, iconData.position.z);
-            scene.add(text);
+            const halo = new THREE.Mesh(haloGeometry, haloMaterial);
+            halo.position.set(iconData.position.x, iconData.position.y, iconData.position.z);
+            scene.add(halo);
         });
-        
-        camera.position.z = 5;
         
         // Controlli per ruotare la scena
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableZoom = false;
         controls.enablePan = false;
         controls.autoRotate = true;
-        controls.autoRotateSpeed = 1;
+        controls.autoRotateSpeed = 0.5;
         
         // Raycaster per interazione con il mouse
         const raycaster = new THREE.Raycaster();
@@ -176,6 +354,10 @@
         function onMouseMove(event) {
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            // Muovere le luci con il mouse
+            directionalLight1.position.x = mouse.x * 10;
+            directionalLight1.position.y = mouse.y * 10;
         }
         
         function onClick() {
@@ -196,7 +378,6 @@
             
             // Animazione icone
             icons.forEach((icon, index) => {
-                icon.rotation.x += 0.01;
                 icon.rotation.y += 0.01;
                 
                 // Effetto hover
@@ -204,11 +385,12 @@
                 const intersects = raycaster.intersectObject(icon);
                 
                 if (intersects.length > 0) {
-                    icon.scale.lerp(new THREE.Vector3(1.5, 1.5, 1.5), 0.1);
-                    icon.material.emissiveIntensity = 0.8;
+                    icon.scale.lerp(new THREE.Vector3(1.3, 1.3, 1.3), 0.1);
+                    icon.material.emissive = new THREE.Color(0xffffff);
+                    icon.material.emissiveIntensity = 0.5;
                 } else {
                     icon.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
-                    icon.material.emissiveIntensity = 0.2;
+                    icon.material.emissiveIntensity = 0;
                 }
             });
             
@@ -225,8 +407,16 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
         
-        // Effetto particelle (opzionale)
-        // Avresti bisogno di includere particles.js per questo effetto
+        // Aggiungi stile per le particelle fluttuanti
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% { transform: translateY(0) translateX(0); }
+                50% { transform: translateY(-100px) translateX(10px); }
+                100% { transform: translateY(0) translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
