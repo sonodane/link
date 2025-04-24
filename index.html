@@ -3,92 +3,511 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My 3D Link Portfolio</title>
+  <title>3D Interactive Link Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body, html {
       margin: 0;
       padding: 0;
       overflow: hidden;
       background: #000;
-      font-family: sans-serif;
+      font-family: 'Montserrat', sans-serif;
     }
+    
     #overlay {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       z-index: 10;
-      color: white;
+      pointer-events: none;
     }
-    #overlay a {
-      display: block;
+    
+    .title {
+      color: white;
+      font-size: 2.5rem;
+      margin-bottom: 3rem;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 1s ease;
+    }
+    
+    .links-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    
+    .link-item {
+      position: relative;
       color: #0ff;
       text-decoration: none;
-      margin-bottom: 10px;
-      font-size: 18px;
-      transition: color 0.3s;
+      font-size: 1.5rem;
+      font-weight: 600;
+      padding: 0.8rem 2rem;
+      border: 2px solid #0ff;
+      border-radius: 50px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
+      pointer-events: auto;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0);
     }
-    #overlay a:hover {
+    
+    .link-item:hover {
+      background: rgba(0, 255, 255, 0.2);
       color: #fff;
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+    }
+    
+    .link-item::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      right: -5px;
+      bottom: -5px;
+      border: 2px solid #0ff;
+      border-radius: 50px;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .link-item:hover::before {
+      opacity: 0.5;
+      top: -8px;
+      left: -8px;
+      right: -8px;
+      bottom: -8px;
+    }
+    
+    .link-icon {
+      margin-right: 10px;
+    }
+    
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      color: #0ff;
+      font-size: 1.5rem;
+    }
+    
+    .loading-bar {
+      width: 200px;
+      height: 3px;
+      background: rgba(0, 255, 255, 0.2);
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    
+    .loading-progress {
+      height: 100%;
+      width: 0%;
+      background: #0ff;
+      transition: width 0.3s ease;
+    }
+    
+    @media (max-width: 768px) {
+      .title {
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+      }
+      
+      .link-item {
+        font-size: 1.2rem;
+        padding: 0.6rem 1.5rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="overlay">
-    <a href="https://yourportfolio.com" target="_blank" onclick="trackLink('portfolio')">🌐 Portfolio</a>
-    <a href="https://instagram.com/yourprofile" target="_blank" onclick="trackLink('instagram')">📷 Instagram</a>
-    <a href="https://youtube.com/yourchannel" target="_blank" onclick="trackLink('youtube')">🎥 YouTube</a>
+  <div class="loading">
+    <div class="loading-content">
+      <div>Loading 3D Experience...</div>
+      <div class="loading-bar">
+        <div class="loading-progress" id="loading-progress"></div>
+      </div>
+    </div>
   </div>
+  
+  <div id="overlay">
+    <h1 class="title">Interactive Link Hub</h1>
+    <div class="links-container">
+      <a href="https://yourportfolio.com" target="_blank" class="link-item" onclick="trackLink('portfolio')">
+        <span class="link-icon">🌐</span> Portfolio
+      </a>
+      <a href="https://instagram.com/yourprofile" target="_blank" class="link-item" onclick="trackLink('instagram')">
+        <span class="link-icon">📷</span> Instagram
+      </a>
+      <a href="https://youtube.com/yourchannel" target="_blank" class="link-item" onclick="trackLink('youtube')">
+        <span class="link-icon">🎥</span> YouTube
+      </a>
+      <a href="https://github.com/yourprofile" target="_blank" class="link-item" onclick="trackLink('github')">
+        <span class="link-icon">💻</span> GitHub
+      </a>
+    </div>
+  </div>
+  
   <canvas id="scene"></canvas>
+  <div id="particles-js"></div>
 
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
     import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/controls/OrbitControls.js';
-
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
+    
+    // Loading progress
+    const loadingProgress = document.getElementById('loading-progress');
+    const loadingScreen = document.querySelector('.loading');
+    
+    // Update loading progress
+    function updateProgress(progress) {
+      loadingProgress.style.width = `${progress}%`;
+      if (progress >= 100) {
+        setTimeout(() => {
+          loadingScreen.style.opacity = '0';
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+            animateLinks();
+          }, 500);
+        }, 500);
+      }
+    }
+    
+    // Animate links on load
+    function animateLinks() {
+      const title = document.querySelector('.title');
+      const links = document.querySelectorAll('.link-item');
+      
+      title.style.opacity = '1';
+      title.style.transform = 'translateY(0)';
+      
+      links.forEach((link, index) => {
+        setTimeout(() => {
+          link.style.opacity = '1';
+          link.style.transform = 'translateY(0)';
+        }, index * 200);
+      });
+    }
+    
+    // Initialize Three.js
     const canvas = document.getElementById('scene');
-    const renderer = new THREE.WebGLRenderer({ canvas });
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas,
+      antialias: true,
+      alpha: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-
+    renderer.shadowMap.enabled = true;
+    
+    updateProgress(10);
+    
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-
+    
+    // Add some fog for depth
+    scene.fog = new THREE.FogExp2(0x000000, 0.05);
+    
+    updateProgress(20);
+    
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-
-    const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
-    const material = new THREE.MeshStandardMaterial({ color: 0x00ffff });
-    const torusKnot = new THREE.Mesh(geometry, material);
-    scene.add(torusKnot);
-
-    const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(10, 10, 10);
-    scene.add(light);
-
+    camera.position.z = 10;
+    camera.position.y = 3;
+    
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0x00ffff, 1);
+    directionalLight.position.set(5, 10, 7);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+    
+    const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
+    pointLight.position.set(0, 5, 10);
+    scene.add(pointLight);
+    
+    updateProgress(30);
+    
+    // Create a galaxy of floating objects
+    const objects = [];
+    const objectCount = 50;
+    
+    const geometries = [
+      new THREE.IcosahedronGeometry(0.5, 0),
+      new THREE.TorusGeometry(0.3, 0.1, 16, 32),
+      new THREE.OctahedronGeometry(0.4, 0),
+      new THREE.ConeGeometry(0.3, 0.8, 32),
+      new THREE.TorusKnotGeometry(0.4, 0.1, 100, 16)
+    ];
+    
+    const materials = [
+      new THREE.MeshPhongMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 }),
+      new THREE.MeshPhongMaterial({ color: 0xff00ff, transparent: true, opacity: 0.8 }),
+      new THREE.MeshPhongMaterial({ color: 0xffff00, transparent: true, opacity: 0.8 }),
+      new THREE.MeshPhongMaterial({ color: 0xff9900, transparent: true, opacity: 0.8 }),
+      new THREE.MeshPhongMaterial({ color: 0x9900ff, transparent: true, opacity: 0.8 })
+    ];
+    
+    for (let i = 0; i < objectCount; i++) {
+      const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+      const material = materials[Math.floor(Math.random() * materials.length)].clone();
+      
+      const mesh = new THREE.Mesh(geometry, material);
+      
+      // Random position in a sphere
+      const radius = 5 + Math.random() * 15;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      
+      mesh.position.x = radius * Math.sin(phi) * Math.cos(theta);
+      mesh.position.y = radius * Math.sin(phi) * Math.sin(theta);
+      mesh.position.z = radius * Math.cos(phi);
+      
+      mesh.rotation.x = Math.random() * Math.PI;
+      mesh.rotation.y = Math.random() * Math.PI;
+      
+      // Random scale
+      const scale = 0.3 + Math.random() * 0.7;
+      mesh.scale.set(scale, scale, scale);
+      
+      // Store original position for animation
+      mesh.userData = {
+        originalPosition: mesh.position.clone(),
+        speed: 0.1 + Math.random() * 0.3,
+        rotationSpeed: new THREE.Vector3(
+          Math.random() * 0.01,
+          Math.random() * 0.01,
+          Math.random() * 0.01
+        )
+      };
+      
+      scene.add(mesh);
+      objects.push(mesh);
+    }
+    
+    updateProgress(70);
+    
+    // Add a central complex object
+    const loader = new GLTFLoader();
+    let centralObject;
+    
+    // Fallback if GLTF doesn't load
+    setTimeout(() => {
+      if (!centralObject) {
+        createFallbackCentralObject();
+        updateProgress(100);
+      }
+    }, 3000);
+    
+    function createFallbackCentralObject() {
+      const group = new THREE.Group();
+      
+      // Create a complex geometric structure
+      const torusKnot = new THREE.Mesh(
+        new THREE.TorusKnotGeometry(1, 0.4, 100, 16),
+        new THREE.MeshPhongMaterial({ 
+          color: 0x00ffff, 
+          emissive: 0x006666,
+          emissiveIntensity: 0.5,
+          specular: 0xffffff,
+          shininess: 30,
+          wireframe: false
+        })
+      );
+      group.add(torusKnot);
+      
+      // Add orbiting spheres
+      const sphereCount = 8;
+      for (let i = 0; i < sphereCount; i++) {
+        const sphere = new THREE.Mesh(
+          new THREE.SphereGeometry(0.3, 32, 32),
+          new THREE.MeshPhongMaterial({
+            color: 0xff00ff,
+            transparent: true,
+            opacity: 0.8
+          })
+        );
+        
+        const angle = (i / sphereCount) * Math.PI * 2;
+        sphere.position.x = Math.cos(angle) * 2;
+        sphere.position.z = Math.sin(angle) * 2;
+        
+        sphere.userData = {
+          angle: angle,
+          speed: 0.005 + Math.random() * 0.01,
+          radius: 2
+        };
+        
+        group.add(sphere);
+      }
+      
+      scene.add(group);
+      centralObject = group;
+    }
+    
+    // Mouse interaction
+    const mouse = new THREE.Vector2();
+    const target = new THREE.Vector2();
+    const windowHalf = new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2);
+    
+    function onMouseMove(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      
+      // Update target for smooth follow
+      target.x = (event.clientX - windowHalf.x) * 0.0005;
+      target.y = (event.clientY - windowHalf.y) * 0.0005;
+    }
+    
+    window.addEventListener('mousemove', onMouseMove, false);
+    
+    updateProgress(80);
+    
+    // Animation loop
     function animate() {
       requestAnimationFrame(animate);
-      torusKnot.rotation.x += 0.01;
-      torusKnot.rotation.y += 0.01;
+      
+      // Animate central object
+      if (centralObject) {
+        centralObject.rotation.x += 0.005;
+        centralObject.rotation.y += 0.007;
+        
+        // Animate orbiting spheres
+        centralObject.children.forEach(child => {
+          if (child.userData.angle !== undefined) {
+            child.userData.angle += child.userData.speed;
+            child.position.x = Math.cos(child.userData.angle) * child.userData.radius;
+            child.position.z = Math.sin(child.userData.angle) * child.userData.radius;
+          }
+        });
+      }
+      
+      // Animate floating objects
+      objects.forEach(obj => {
+        obj.rotation.x += obj.userData.rotationSpeed.x;
+        obj.rotation.y += obj.userData.rotationSpeed.y;
+        obj.rotation.z += obj.userData.rotationSpeed.z;
+        
+        // Gentle floating animation
+        const time = Date.now() * 0.001;
+        obj.position.x = obj.userData.originalPosition.x + Math.sin(time * obj.userData.speed) * 0.5;
+        obj.position.y = obj.userData.originalPosition.y + Math.cos(time * obj.userData.speed) * 0.5;
+        obj.position.z = obj.userData.originalPosition.z + Math.sin(time * obj.userData.speed * 0.7) * 0.5;
+      });
+      
+      // Smooth camera follow for mouse movement
+      camera.position.x += (target.x - camera.position.x) * 0.05;
+      camera.position.y += (-target.y - camera.position.y) * 0.05;
+      camera.lookAt(scene.position);
+      
       renderer.render(scene, camera);
     }
+    
     animate();
-
+    
+    updateProgress(90);
+    
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      windowHalf.set(window.innerWidth / 2, window.innerHeight / 2);
     });
+    
+    // Initialize particles.js
+    setTimeout(() => {
+      loadParticlesJS();
+    }, 0);
+    
+    function loadParticlesJS() {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js';
+      script.onload = () => {
+        particlesJS('particles-js', {
+          particles: {
+            number: { value: 80, density: { enable: true, value_area: 800 } },
+            color: { value: "#00ffff" },
+            shape: { type: "circle" },
+            opacity: { value: 0.5, random: true },
+            size: { value: 3, random: true },
+            line_linked: { enable: true, distance: 150, color: "#00ffff", opacity: 0.2, width: 1 },
+            move: { enable: true, speed: 2, direction: "none", random: true, straight: false, out_mode: "out" }
+          },
+          interactivity: {
+            detect_on: "canvas",
+            events: {
+              onhover: { enable: true, mode: "repulse" },
+              onclick: { enable: true, mode: "push" },
+              resize: true
+            }
+          }
+        });
+        updateProgress(100);
+      };
+      document.body.appendChild(script);
+    }
   </script>
 
   <!-- Simple Analytics Tracker -->
   <script>
     function trackLink(linkName) {
+      // Animation when clicking a link
+      const link = event.currentTarget;
+      link.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        link.style.transform = 'scale(1.05)';
+      }, 100);
+      
+      // Analytics tracking
       fetch('https://your-backend.com/track', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ link: linkName, timestamp: new Date().toISOString() })
+        body: JSON.stringify({ 
+          link: linkName, 
+          timestamp: new Date().toISOString(),
+          screenWidth: window.innerWidth,
+          screenHeight: window.innerHeight
+        })
+      }).catch(() => {
+        // Fallback if tracking fails
+        console.log('Link clicked:', linkName);
       });
     }
   </script>
