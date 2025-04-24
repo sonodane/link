@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 from datetime import datetime
 import json
 import os
@@ -26,6 +26,36 @@ def track():
         json.dump(logs, f, indent=2)
 
     return jsonify({"status": "success", "message": "Link tracked."}), 200
+
+@app.route('/analytics')
+def analytics():
+    with open(LOG_FILE, 'r') as f:
+        logs = json.load(f)
+
+    counts = {}
+    for log in logs:
+        link = log['link']
+        counts[link] = counts.get(link, 0) + 1
+
+    html = '''
+    <html>
+      <head>
+        <title>Analytics Dashboard</title>
+        <style>
+          body { font-family: sans-serif; background: #121212; color: #eee; padding: 20px; }
+          h1 { color: #0ff; }
+          .link-data { margin-bottom: 10px; }
+        </style>
+      </head>
+      <body>
+        <h1>🔍 Analytics Dashboard</h1>
+        {% for link, count in counts.items() %}
+          <div class="link-data">🔗 <strong>{{ link }}</strong>: {{ count }} click{{ 's' if count > 1 else '' }}</div>
+        {% endfor %}
+      </body>
+    </html>
+    '''
+    return render_template_string(html, counts=counts)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
