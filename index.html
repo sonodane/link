@@ -1,589 +1,96 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced 3D LinkTree</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #ff4d4d;
-            --secondary: #4d79ff;
-            --accent: #ffcc00;
-            --bg-dark: #121212;
-            --bg-light: #1e1e1e;
-            --text-light: #f8f8f8;
-            --glass: rgba(255, 255, 255, 0.05);
-        }
-        
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-light);
-        }
-        
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-        
-        .content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            width: 90%;
-            max-width: 900px;
-            pointer-events: none;
-        }
-        
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            background: linear-gradient(to right, var(--primary), var(--accent);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
-        
-        .social-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 40px;
-            margin-top: 60px;
-            pointer-events: none;
-        }
-        
-        .social-item {
-            position: relative;
-            width: 140px;
-            height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            pointer-events: auto;
-        }
-        
-        .social-icon-container {
-            width: 120px;
-            height: 120px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            margin-bottom: 15px;
-        }
-        
-        .social-icon-container:hover {
-            transform: translateY(-10px) scale(1.1);
-            filter: drop-shadow(0 15px 20px rgba(255, 165, 0, 0.4));
-        }
-        
-        .social-label {
-            font-size: 1rem;
-            opacity: 0.8;
-            transition: all 0.3s ease;
-            background: var(--glass);
-            padding: 5px 15px;
-            border-radius: 20px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .social-icon-container:hover + .social-label {
-            opacity: 1;
-            color: var(--accent);
-            transform: translateY(5px);
-        }
-        
-        .bio {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            padding: 25px 30px;
-            border-radius: 20px;
-            margin-bottom: 40px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .bio p {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin: 0;
-            opacity: 0.9;
-        }
-        
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-dark);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 1s ease-out;
-        }
-        
-        .progress-bar {
-            width: 200px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            margin-top: 20px;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        
-        .progress {
-            height: 100%;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        .model-upload {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--glass);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .model-upload h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-        
-        .upload-input {
-            display: none;
-        }
-        
-        .upload-btn {
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 76, 76, 0.4);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My 3D Link Portfolio</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: sans-serif;
+    }
+    #overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      color: white;
+    }
+    #overlay a {
+      display: block;
+      color: #0ff;
+      text-decoration: none;
+      margin-bottom: 10px;
+      font-size: 18px;
+      transition: color 0.3s;
+    }
+    #overlay a:hover {
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-    <div id="canvas-container"></div>
-    
-    <div class="loading-screen" id="loadingScreen">
-        <h2>Caricamento esperienza 3D</h2>
-        <div class="progress-bar">
-            <div class="progress" id="progressBar"></div>
-        </div>
-    </div>
-    
-    <div class="content">
-        <div class="bio">
-            <h1>@IlTuoUsername</h1>
-            <p>Esplora i miei link e connettiamoci attraverso i social media. Clicca sulle icone 3D qui sotto!</p>
-        </div>
-        
-        <div class="social-container">
-            <div class="social-item">
-                <div class="social-icon-container" id="icon1" data-link="https://instagram.com">
-                    <!-- Modello 3D verrà inserito qui -->
-                </div>
-                <div class="social-label">Instagram</div>
-            </div>
-            <div class="social-item">
-                <div class="social-icon-container" id="icon2" data-link="https://linkedin.com">
-                    <!-- Modello 3D verrà inserito qui -->
-                </div>
-                <div class="social-label">LinkedIn</div>
-            </div>
-            <div class="social-item">
-                <div class="social-icon-container" id="icon3" data-link="https://facebook.com">
-                    <!-- Modello 3D verrà inserito qui -->
-                </div>
-                <div class="social-label">Facebook</div>
-            </div>
-            <div class="social-item">
-                <div class="social-icon-container" id="icon4" data-link="https://twitter.com">
-                    <!-- Modello 3D verrà inserito qui -->
-                </div>
-                <div class="social-label">Twitter</div>
-            </div>
-            <div class="social-item">
-                <div class="social-icon-container" id="icon5" data-link="https://youtube.com">
-                    <!-- Modello 3D verrà inserito qui -->
-                </div>
-                <div class="social-label">YouTube</div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="model-upload">
-        <h3>Carica i tuoi modelli 3D</h3>
-        <input type="file" id="modelUpload" class="upload-input" accept=".glb,.gltf" multiple>
-        <button class="upload-btn" onclick="document.getElementById('modelUpload').click()">Scegli File</button>
-        <p id="uploadStatus">Pronto per caricare i modelli</p>
-    </div>
+  <div id="overlay">
+    <a href="https://yourportfolio.com" target="_blank" onclick="trackLink('portfolio')">🌐 Portfolio</a>
+    <a href="https://instagram.com/yourprofile" target="_blank" onclick="trackLink('instagram')">📷 Instagram</a>
+    <a href="https://youtube.com/yourchannel" target="_blank" onclick="trackLink('youtube')">🎥 YouTube</a>
+  </div>
+  <canvas id="scene"></canvas>
 
-    <script>
-        // Inizializzazione scena Three.js avanzata
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x121212);
-        
-        // Camera con effetto cinematico
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0, 10);
-        
-        // Renderer con miglioramenti prestazionali
-        const renderer = new THREE.WebGLRenderer({ 
-            antialias: true, 
-            alpha: false,
-            powerPreference: "high-performance"
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        container.appendChild(renderer.domElement);
-        
-        // Sistema di illuminazione avanzato
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-        scene.add(ambientLight);
-        
-        const directionalLight1 = new THREE.DirectionalLight(0xff4d4d, 1.5);
-        directionalLight1.position.set(5, 5, 5);
-        directionalLight1.castShadow = true;
-        directionalLight1.shadow.mapSize.width = 1024;
-        directionalLight1.shadow.mapSize.height = 1024;
-        scene.add(directionalLight1);
-        
-        const directionalLight2 = new THREE.DirectionalLight(0x4d79ff, 1.5);
-        directionalLight2.position.set(-5, 5, -5);
-        scene.add(directionalLight2);
-        
-        const pointLight = new THREE.PointLight(0xffcc00, 2, 20);
-        pointLight.position.set(0, 3, 5);
-        pointLight.castShadow = true;
-        scene.add(pointLight);
-        
-        // Aggiungi luce di riempimento
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        fillLight.position.set(0, -1, 0.5);
-        scene.add(fillLight);
-        
-        // Effetto nebbia per profondità
-        scene.fog = new THREE.FogExp2(0x121212, 0.02);
-        
-        // Posizioni delle icone
-        const iconPositions = [
-            { x: -4, y: 0, z: 0 },
-            { x: -2, y: 0, z: 0 },
-            { x: 0, y: 0, z: 0 },
-            { x: 2, y: 0, z: 0 },
-            { x: 4, y: 0, z: 0 }
-        ];
-        
-        // Array per memorizzare i modelli 3D
-        const iconModels = [];
-        const iconGroups = [];
-        
-        // Creazione di gruppi per ogni icona
-        iconPositions.forEach((pos, index) => {
-            const group = new THREE.Group();
-            group.position.set(pos.x, pos.y, pos.z);
-            scene.add(group);
-            iconGroups.push(group);
-            
-            // Aggiungi un punto di luce per ogni icona
-            const iconLight = new THREE.PointLight(0xffffff, 1, 3);
-            iconLight.position.set(0, 0.5, 0);
-            group.add(iconLight);
-            
-            // Aggiungi un segnaposto temporaneo
-            const placeholderGeometry = new THREE.IcosahedronGeometry(0.5, 1);
-            const placeholderMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x888888,
-                roughness: 0.5,
-                metalness: 0.5,
-                transparent: true,
-                opacity: 0.7
-            });
-            const placeholder = new THREE.Mesh(placeholderGeometry, placeholderMaterial);
-            group.add(placeholder);
-            
-            iconModels.push({
-                group: group,
-                model: null,
-                placeholder: placeholder,
-                light: iconLight
-            });
-        });
-        
-        // Configurazione del caricatore di modelli
-        const loader = new THREE.GLTFLoader();
-        const dracoLoader = new THREE.DRACOLoader();
-        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-        loader.setDRACOLoader(dracoLoader);
-        
-        // Funzione per caricare un modello 3D
-        function loadModel(url, index) {
-            return new Promise((resolve, reject) => {
-                loader.load(
-                    url,
-                    (gltf) => {
-                        const model = gltf.scene;
-                        
-                        // Centra e scala il modello
-                        model.traverse((child) => {
-                            if (child.isMesh) {
-                                child.castShadow = true;
-                                child.receiveShadow = true;
-                            }
-                        });
-                        
-                        // Rimuovi il segnaposto
-                        if (iconModels[index].placeholder) {
-                            iconModels[index].group.remove(iconModels[index].placeholder);
-                        }
-                        
-                        // Aggiungi il modello al gruppo
-                        iconModels[index].group.add(model);
-                        iconModels[index].model = model;
-                        
-                        // Animazione iniziale
-                        gsap.to(model.scale, { 
-                            x: 1, y: 1, z: 1, 
-                            duration: 1, 
-                            ease: "elastic.out(1, 0.3)" 
-                        });
-                        
-                        resolve();
-                    },
-                    (xhr) => {
-                        const percentComplete = (xhr.loaded / xhr.total) * 100;
-                        updateProgress(percentComplete);
-                    },
-                    (error) => {
-                        console.error('Error loading model:', error);
-                        reject(error);
-                    }
-                );
-            });
-        }
-        
-        // Funzione per aggiornare la barra di progresso
-        function updateProgress(percent) {
-            const progressBar = document.getElementById('progressBar');
-            progressBar.style.width = `${percent}%`;
-        }
-        
-        // Nascondi lo schermo di caricamento
-        function hideLoadingScreen() {
-            const loadingScreen = document.getElementById('loadingScreen');
-            gsap.to(loadingScreen, {
-                opacity: 0,
-                duration: 1,
-                onComplete: () => {
-                    loadingScreen.style.display = 'none';
-                }
-            });
-        }
-        
-        // Carica modelli di default (puoi sostituirli con i tuoi)
-        async function loadDefaultModels() {
-            try {
-                // Esempio: carica modelli di default (sostituisci con i tuoi percorsi)
-                // await loadModel('models/instagram.glb', 0);
-                // await loadModel('models/linkedin.glb', 1);
-                // await loadModel('models/facebook.glb', 2);
-                // await loadModel('models/twitter.glb', 3);
-                // await loadModel('models/youtube.glb', 4);
-                
-                // Per ora creiamo modelli di base
-                for (let i = 0; i < 5; i++) {
-                    createBasicIcon(i);
-                }
-                
-                hideLoadingScreen();
-            } catch (error) {
-                console.error('Error loading default models:', error);
-                hideLoadingScreen();
-            }
-        }
-        
-        // Crea icone di base se non vengono caricati modelli
-        function createBasicIcon(index) {
-            const colors = [0xE1306C, 0x0077B5, 0x4267B2, 0x1DA1F2, 0xFF0000];
-            const geometry = new THREE.IcosahedronGeometry(0.7, 2);
-            const material = new THREE.MeshStandardMaterial({
-                color: colors[index],
-                roughness: 0.3,
-                metalness: 0.7,
-                emissive: colors[index],
-                emissiveIntensity: 0.2
-            });
-            
-            const icon = new THREE.Mesh(geometry, material);
-            icon.castShadow = true;
-            
-            if (iconModels[index].placeholder) {
-                iconModels[index].group.remove(iconModels[index].placeholder);
-            }
-            
-            iconModels[index].group.add(icon);
-            iconModels[index].model = icon;
-        }
-        
-        // Sistema per caricare i tuoi modelli
-        document.getElementById('modelUpload').addEventListener('change', async function(e) {
-            const files = e.target.files;
-            const statusElement = document.getElementById('uploadStatus');
-            
-            if (files.length === 0) return;
-            
-            statusElement.textContent = 'Caricamento in corso...';
-            
-            try {
-                for (let i = 0; i < Math.min(files.length, 5); i++) {
-                    const file = files[i];
-                    const url = URL.createObjectURL(file);
-                    await loadModel(url, i);
-                    URL.revokeObjectURL(url);
-                }
-                
-                statusElement.textContent = 'Modelli caricati con successo!';
-                setTimeout(() => {
-                    statusElement.textContent = 'Pronto per caricare altri modelli';
-                }, 3000);
-            } catch (error) {
-                console.error('Error uploading models:', error);
-                statusElement.textContent = 'Errore nel caricamento dei modelli';
-            }
-        });
-        
-        // Controlli della camera
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableZoom = false;
-        controls.enablePan = false;
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.5;
-        controls.minPolarAngle = Math.PI / 4;
-        controls.maxPolarAngle = Math.PI / 1.5;
-        
-        // Raycaster per interazioni
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
-        // Gestione movimento mouse
-        function onMouseMove(event) {
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            
-            // Muovi le luci con il mouse per effetti dinamici
-            directionalLight1.position.x = mouse.x * 10;
-            directionalLight1.position.y = mouse.y * 10;
-            pointLight.position.x = mouse.x * 3;
-            pointLight.position.y = -mouse.y * 3;
-        }
-        
-        // Gestione click
-        function onClick(event) {
-            raycaster.setFromCamera(mouse, camera);
-            
-            // Controlla collisione con i modelli
-            for (let i = 0; i < iconGroups.length; i++) {
-                const intersects = raycaster.intersectObject(iconGroups[i], true);
-                
-                if (intersects.length > 0) {
-                    const link = document.getElementById(`icon${i+1}`).dataset.link;
-                    if (link) {
-                        window.open(link, '_blank');
-                    }
-                    break;
-                }
-            }
-        }
-        
-        window.addEventListener('mousemove', onMouseMove, false);
-        window.addEventListener('click', onClick, false);
-        
-        // Animazione
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            // Animazione modelli
-            iconGroups.forEach((group, index) => {
-                group.rotation.y += 0.005;
-                
-                // Effetto hover
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObject(group, true);
-                
-                if (intersects.length > 0) {
-                    gsap.to(group.scale, { x: 1.2, y: 1.2, z: 1.2, duration: 0.3 });
-                    if (iconModels[index].light) {
-                        iconModels[index].light.intensity = 2;
-                    }
-                } else {
-                    gsap.to(group.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
-                    if (iconModels[index].light) {
-                        iconModels[index].light.intensity = 0.5;
-                    }
-                }
-            });
-            
-            controls.update();
-            renderer.render(scene, camera);
-        }
-        
-        // Gestione responsive
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-        
-        window.addEventListener('resize', onWindowResize, false);
-        
-        // Avvia tutto
-        loadDefaultModels();
-        animate();
-        
-        // Aggiungi GSAP per animazioni fluide
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js';
-        document.head.appendChild(script);
-    </script>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/controls/OrbitControls.js';
+
+    const canvas = document.getElementById('scene');
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ffff });
+    const torusKnot = new THREE.Mesh(geometry, material);
+    scene.add(torusKnot);
+
+    const light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      torusKnot.rotation.x += 0.01;
+      torusKnot.rotation.y += 0.01;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+
+  <!-- Simple Analytics Tracker -->
+  <script>
+    function trackLink(linkName) {
+      fetch('https://your-backend.com/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ link: linkName, timestamp: new Date().toISOString() })
+      });
+    }
+  </script>
 </body>
 </html>
